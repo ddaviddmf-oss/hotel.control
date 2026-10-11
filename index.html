@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Control de Hotel</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="cabeza">
+    <header class="barra">
+      <div class="marca">
+        <span id="nombre-hotel">Hotel</span>
+        <span id="reloj"></span>
+      </div>
+      <div class="contadores" id="contadores"></div>
+      <div class="acciones-barra">
+        <span id="sync" class="sync"></span>
+        <button id="btn-alertas" class="campana" data-accion="alertas" aria-label="Alertas">🔔<span id="num-alertas" class="badge" hidden>0</span></button>
+      </div>
+    </header>
+    <nav class="tabs" id="tabs">
+      <button data-tab="habitaciones">🛏️ Habitaciones</button>
+      <button data-tab="limpieza">🧹 Limpieza <span class="badge" id="badge-limpieza" hidden></span></button>
+      <button data-tab="insumos">🧴 Insumos <span class="badge" id="badge-insumos" hidden></span></button>
+      <button data-tab="reportes">📋 Faltantes <span class="badge" id="badge-reportes" hidden></span></button>
+      <button data-tab="historial">📊 Historial</button>
+      <button data-tab="ajustes">⚙️ Ajustes</button>
+    </nav>
+  </div>
+
+  <main id="vista"></main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-caja" role="dialog" aria-modal="true">
+      <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      <div id="modal-cuerpo"></div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
