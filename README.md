@@ -33,7 +33,7 @@ No necesita servidor propio ni cuentas: son archivos estáticos (`index.html`, `
    del hotel).
 3. En github.com abre el repositorio → **Settings → Pages** → *Source: Deploy from a branch* →
    rama `main`, carpeta `/ (root)` → **Save**.
-4. En 1–2 minutos estará en `https://TU-USUARIO.github.io/hotel-control/`. Abre esa dirección en la
+4. En 1–2 minutos estará en https://ddaviddmf-oss.github.io/hotel.control/. Abre esa dirección en la
    tablet; nadie necesita cuenta para usarla.
 
 Alternativa: arrastrar la carpeta a <https://app.netlify.com/drop> (requiere crear cuenta gratuita
