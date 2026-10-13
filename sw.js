@@ -1,5 +1,5 @@
 // Service worker: permite instalar la app en la tablet y abrirla aunque falle el internet.
-const CACHE = "hotel-v1";
+const CACHE = "hotel-v2";
 const ARCHIVOS = ["./", "index.html", "styles.css", "app.js", "config.js", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", (e) => {

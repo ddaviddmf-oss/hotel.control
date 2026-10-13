@@ -69,14 +69,14 @@ function semilla() {
     const id = "t" + i;
     tarifas[id] = { id, nombre, minutos, precio, orden: i };
   });
-  return { config: { nombreHotel: "Mi Hotel", avisoMin: 15 }, habitaciones, productos, tarifas, reportes: {}, historial: {} };
+  return { config: { nombreHotel: "Mi Hotel", avisoMin: 10 }, habitaciones, productos, tarifas, reportes: {}, historial: {} };
 }
 
 // Firebase elimina los objetos vacíos, así que siempre se reconstruye la forma completa.
 function normalizar(d) {
   d = d || {};
   return {
-    config: Object.assign({ nombreHotel: "Mi Hotel", avisoMin: 15 }, d.config || {}),
+    config: Object.assign({ nombreHotel: "Mi Hotel", avisoMin: 10 }, d.config || {}),
     habitaciones: d.habitaciones || {},
     productos: d.productos || {},
     tarifas: d.tarifas || {},
@@ -286,7 +286,7 @@ function toast(html, nivel = "ok") {
    Alertas
    ===================================================================== */
 function calcularAlertas() {
-  const ahora = Date.now(), aviso = (state.config.avisoMin || 15) * 60000, out = [];
+  const ahora = Date.now(), aviso = (state.config.avisoMin || 10) * 60000, out = [];
   for (const h of lista(state.habitaciones)) {
     if (h.estado !== "ocupada") continue;
     const r = h.fin - ahora;
@@ -335,7 +335,7 @@ function tarjeta(h) {
   if (h.estado === "ocupada") {
     cuerpo = `<div class="cuenta" data-fin="${h.fin}"></div>
       <div class="barra-prog"><i data-prog-fin="${h.fin}" data-prog-inicio="${h.inicio}"></i></div>
-      <div class="sub">Sale ${hora(h.fin)}${h.huesped ? " · " + esc(h.huesped) : ""}</div>`;
+      <div class="sub">Sale ${hora(h.fin)} · ${h.placas ? "🚗 " + esc(h.placas) : h.llegada === "caminando" ? "🚶" : esc(h.huesped || "")}</div>`;
   } else if (h.estado === "sucia") {
     cuerpo = `<div class="sub" data-desde="${h.desde || 0}" data-pre="Desocupada "></div>`;
   } else if (h.estado === "limpiando") {
@@ -553,7 +553,7 @@ function render() {
 }
 
 function tick() {
-  const ahora = Date.now(), aviso = (state.config.avisoMin || 15) * 60000;
+  const ahora = Date.now(), aviso = (state.config.avisoMin || 10) * 60000;
   $("#reloj").textContent = new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
   $$("[data-fin]").forEach((el) => {
     const r = +el.dataset.fin - ahora;
@@ -611,8 +611,16 @@ function abrirHab(id) {
         <label>Minutos<input type="number" id="ci-min" min="1" value="120" inputmode="numeric"></label>
         <label>Precio<input type="number" id="ci-precio" min="0" value="0" inputmode="decimal"></label>
       </div>
+      <h3>¿Cómo llegan?</h3>
+      <div class="tarifas">
+        <label class="tarifa"><input type="radio" name="llegada" value="carro" checked><span><b>🚗 En carro</b><small>registrar placas</small></span></label>
+        <label class="tarifa"><input type="radio" name="llegada" value="caminando"><span><b>🚶 Caminando</b><small>sin vehículo</small></span></label>
+      </div>
+      <div id="campos-carro">
+        <label>Placas del carro<input id="ci-placas" autocomplete="off" autocapitalize="characters" placeholder="Ej. ABC-123-D" style="text-transform:uppercase"></label>
+      </div>
       <div class="campos">
-        <label>Huésped / placa (opcional)<input id="ci-huesped" autocomplete="off"></label>
+        <label>Nombre del huésped (opcional)<input id="ci-huesped" autocomplete="off"></label>
         <label>Nota (opcional)<input id="ci-nota" autocomplete="off"></label>
       </div>
       <div class="botones"><button class="btn primario grande" data-accion="checkin" data-id="${id}">Registrar entrada</button></div>
@@ -625,7 +633,9 @@ function abrirHab(id) {
         <div><small>Salida</small>${hora(h.fin)}</div>
         <div><small>Tarifa</small>${esc(h.tarifa || "")}</div>
         <div><small>Cobrado</small>${dinero(h.monto)}</div>
-        ${h.huesped ? `<div><small>Huésped / placa</small>${esc(h.huesped)}</div>` : ""}
+        ${h.llegada ? `<div><small>Llegada</small>${h.llegada === "carro" ? "🚗 En carro" : "🚶 Caminando"}</div>` : ""}
+        ${h.placas ? `<div><small>Placas</small><b>${esc(h.placas)}</b></div>` : ""}
+        ${h.huesped ? `<div><small>Huésped</small>${esc(h.huesped)}</div>` : ""}
         ${h.nota ? `<div><small>Nota</small>${esc(h.nota)}</div>` : ""}
       </div>
       <h3>Extender tiempo</h3>
@@ -732,12 +742,15 @@ const acciones = {
       ({ minutos, precio, nombre } = t);
     }
     if (!(minutos > 0)) return toast("Indica cuántos minutos", "urgente");
+    const llegada = $("input[name=llegada]:checked")?.value || "caminando";
+    const placas = llegada === "carro" ? $("#ci-placas").value.trim().toUpperCase() : "";
+    if (llegada === "carro" && !placas) { $("#ci-placas").focus(); return toast("Escribe las placas del carro", "urgente"); }
     const ahora = Date.now(), fin = ahora + minutos * 60000;
     escribir(`habitaciones/${id}`, {
-      ...basicos(h), estado: "ocupada", inicio: ahora, fin, tarifa: nombre, monto: precio,
+      ...basicos(h), estado: "ocupada", inicio: ahora, fin, tarifa: nombre, monto: precio, llegada, placas,
       huesped: $("#ci-huesped").value.trim(), nota: $("#ci-nota").value.trim(),
     });
-    log("entrada", `Entrada hab ${h.numero} · ${nombre}`, precio);
+    log("entrada", `Entrada hab ${h.numero} · ${nombre} · ${placas ? "🚗 " + placas : "🚶 caminando"}`, precio);
     cerrarModal();
     toast(`Hab ${esc(h.numero)} ocupada hasta las <b>${hora(fin)}</b>`);
   },
@@ -760,7 +773,7 @@ const acciones = {
     if (!h || h.estado !== "ocupada") return;
     if (!confirm(`¿Registrar la salida de la habitación ${h.numero}?`)) return;
     escribir(`habitaciones/${id}`, { ...basicos(h), estado: "sucia", desde: Date.now() });
-    log("salida", `Salida hab ${h.numero} · estancia ${duracion(Date.now() - h.inicio)} · total ${dinero(h.monto)}`);
+    log("salida", `Salida hab ${h.numero}${h.placas ? " · 🚗 " + h.placas : ""} · estancia ${duracion(Date.now() - h.inicio)} · total ${dinero(h.monto)}`);
     cerrarModal();
     toast(`Hab ${esc(h.numero)} pasa a <b>por limpiar</b>`, "aviso");
   },
@@ -1005,6 +1018,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("change", (e) => {
   const t = e.target;
   if (t.name === "tarifa") { $("#campos-otro").hidden = t.value !== "otro"; return; }
+  if (t.name === "llegada") { $("#campos-carro").hidden = t.value !== "carro"; return; }
   if (t.dataset.ajuste) {
     const v = t.type === "number" ? Math.max(1, Math.round(+t.value || 1)) : t.value.trim() || "Mi Hotel";
     escribir(`config/${t.dataset.ajuste}`, v);
@@ -1053,6 +1067,11 @@ window.addEventListener("online", () => {
 ui.tab = vistas[prefs.tab] ? prefs.tab : "habitaciones";
 escribirLS(LS.estado, state);
 conectarSync();
+// El aviso por defecto pasó de 15 a 10 minutos; se actualiza una sola vez en datos existentes.
+if (!state.config.aviso10) {
+  if (state.config.avisoMin === 15) escribir("config/avisoMin", 10);
+  escribir("config/aviso10", true);
+}
 render();
 setInterval(tick, 1000);
 setInterval(vaciarCola, 15000);
